@@ -17,6 +17,7 @@ LDFLAGS    += `pkg-config --libs gtk+-3.0 webkitgtk-3.0`
 all: $(OBJECTS) $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJECTS)
+	mkdir bin
 	$(CC) $(OBJECTS) -o $@ $(LDFLAGS)
 
 .c.o:
@@ -24,3 +25,4 @@ $(EXECUTABLE): $(OBJECTS)
 
 clean:
 	rm $(OBJECTS) $(EXECUTABLE)
+
