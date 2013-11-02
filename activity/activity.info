@@ -1,6 +1,6 @@
 [Activity]
-name = Test2-v2
+name = Sugar Web Native
 activity_version = 1
-bundle_id = org.sugarlabs.Test2
+bundle_id = org.sugarlabs.web-native
 exec = test2
 icon = activity-icon
