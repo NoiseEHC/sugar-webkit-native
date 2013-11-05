@@ -1,0 +1,314 @@
+* {
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+}
+html {
+  height: 100%;
+}
+body {
+  margin: 0;
+  height: 100%;
+  background-color: #c0c0c0;
+  position: relative;
+  font-family: sans-serif;
+  font-size: 10pt;
+}
+.unselectable {
+  -moz-user-select: none;
+  -webkit-user-select: none;
+}
+.pull-right {
+  float: right;
+}
+/* Toolbar */
+.toolbar {
+  color: white;
+  background-color: #282828;
+  padding: 0 57px;
+  height: 55px;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+}
+/* Toolbar toolbutton */
+.toolbar .toolbutton {
+  background-color: transparent;
+  background-position: center;
+  background-size: contain;
+  background-repeat: no-repeat;
+  color: white;
+  color: transparent;
+  border: 0;
+  border-radius: 5.5px;
+  margin: 4px 2px;
+  width: 47px;
+  height: 47px;
+}
+.toolbar .toolbutton:hover {
+  background-color: black;
+}
+.toolbar .toolbutton:active,
+.toolbar .toolbutton.active {
+  background-color: #808080;
+}
+.toolbar .toolbutton img {
+  width: 100%;
+  height: 100%;
+}
+.toolbar #stop-button {
+  background-image: url('../icons/actions/activity-stop.svg');
+}
+/* Canvas */
+#canvas {
+  color: black;
+  background-color: #c0c0c0;
+  position: absolute;
+  bottom: 0;
+  top: 55px;
+  overflow-y: auto;
+  width: 100%;
+}
+/* Button */
+button {
+  background-color: #808080;
+  color: white;
+  border: 2px solid transparent;
+  border-radius: 22px;
+  line-height: 22px;
+  padding: 2px 4px;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+}
+button:hover {
+  background-color: #a2a2a2;
+  border-color: #a2a2a2;
+}
+button:active {
+  background-color: white;
+  color: black;
+  border-color: #808080;
+}
+button:focus {
+  border-color: white;
+}
+.toolbar button {
+  margin-top: 12.5px;
+}
+/* Button with icon */
+button.icon {
+  position: relative;
+  padding-left: 26px;
+}
+button.icon span.ok {
+  background-image: url(../icons/actions/dialog-ok.svg);
+}
+button.icon:active span.ok {
+  background-image: url(../icons/actions/dialog-ok-active.svg);
+}
+button.icon span.cancel {
+  background-image: url(../icons/actions/dialog-cancel.svg);
+}
+button.icon:active span.cancel {
+  background-image: url(../icons/actions/dialog-cancel-active.svg);
+}
+button.icon span {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  background-color: transparent;
+  background-position: center;
+  background-size: 22px 22px;
+  background-repeat: no-repeat;
+  position: absolute;
+}
+button.icon span {
+  top: 2px;
+  left: 2px;
+}
+/* One line text input */
+input[type='text'] {
+  background-color: #e5e5e5;
+  border: 2px solid #e5e5e5;
+  border-radius: 22px;
+  padding: 4px;
+  width: 165px;
+  line-height: 22px;
+  outline: 0;
+}
+input[type='text']:focus {
+  background-color: white;
+}
+input[type='text']:disabled {
+  border-color: #808080;
+  background-color: #808080;
+}
+.toolbar input[type='text'] {
+  margin-top: 10.5px;
+}
+input[type='text'].expand {
+  width: calc(100% - 12px);
+}
+/* One line text input with buttons inside */
+.icon-input {
+  display: inline-block;
+  position: relative;
+}
+.icon-input input[type='text'] {
+  width: 135px;
+  padding-right: 34px;
+}
+.icon-input.expand {
+  width: 100%;
+}
+.icon-input.expand input[type='text'] {
+  width: calc(100% - 42px);
+}
+.icon-input button {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  position: absolute;
+  background-size: 22px 22px;
+}
+.icon-input button.right {
+  margin: 0 0 0 -34px;
+  border-radius: 0 22px 22px 0;
+  right: 0;
+}
+.icon-input button {
+  background-color: transparent;
+  background-position: center;
+  background-repeat: no-repeat;
+  border: 0;
+}
+.icon-input button {
+  top: 2px;
+}
+.toolbar .icon-input button:hover {
+  background-color: transparent;
+}
+.toolbar .icon-input button {
+  top: 10.5px;
+}
+button.cancel {
+  background-image: url(../icons/actions/entry-cancel.svg);
+}
+button.cancel:active {
+  background-image: url(../icons/actions/entry-cancel-active.svg);
+}
+button.cancel:disabled {
+  background-image: url(../icons/actions/entry-cancel-disabled.svg);
+}
+/* Slider */
+/* FIXME this is not fully Sugarized yet */
+input[type='range'] {
+  -webkit-appearance: none !important;
+  background-color: #808080;
+  border-radius: 22px;
+  height: 11px;
+  cursor: pointer;
+}
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none !important;
+  background-color: #c0c0c0;
+  border: 4px solid #808080;
+  border-radius: 11px;
+  height: 22px;
+  width: 22px;
+}
+input[type='range']::-webkit-slider-thumb:hover {
+  background-color: #e2e2e2;
+  border-color: #a2a2a2;
+}
+.toolbar input[type='range'] {
+  margin-top: 22px;
+}
+/* Label */
+label {
+  -moz-user-select: none;
+  -webkit-user-select: none;
+}
+/* Palettes */
+.palette {
+  color: white;
+  background-color: transparent;
+  position: absolute;
+  pointer-events: none;
+}
+.palette-invoker {
+  width: 51px;
+  height: 53px;
+  background-color: black;
+  border: 2px solid #808080;
+  border-bottom: 0;
+  background-position: 2px 2px;
+  background-size: 47px;
+  background-repeat: no-repeat;
+}
+.palette-container {
+  width: 51px;
+  height: 51px;
+  background-color: black;
+  border: 2px solid #808080;
+  min-width: 165px;
+  pointer-events: auto;
+}
+.palette-invoker:before {
+  content: "";
+  background-color: black;
+  position: absolute;
+  display: block;
+  top: 55px;
+  width: 51px;
+  left: 2px;
+  height: 2px;
+}
+/* Scrollbar */
+::-webkit-scrollbar {
+  background-color: #808080;
+  width: 11px;
+}
+::-webkit-scrollbar-thumb {
+  background-color: white;
+  border: 2px solid #dddddd;
+  border-radius: 11px;
+}
+/* Grid for visual debugging and layout */
+.grid {
+  background-color: transparent;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+/* Checkbox */
+input[type='checkbox'] {
+  background-image: url(../icons/actions/checkbox-unchecked.svg);
+  padding: 13px;
+  -moz-appearance: none;
+  appearance: none;
+  -webkit-appearance: none;
+}
+input[type='checkbox']:active {
+  background-image: url(../icons/actions/checkbox-checked-selected.svg);
+}
+input[type='checkbox']:checked:active {
+  background-image: url(../icons/actions/checkbox-checked-selected.svg);
+}
+input[type='checkbox']:checked {
+  background-image: url(../icons/actions/checkbox-checked.svg);
+}
+/* Radio button */
+input[type='radio'] {
+  background-image: url(../icons/actions/radio.svg);
+  padding: 13px;
+  -moz-appearance: none;
+  appearance: none;
+  -webkit-appearance: none;
+}
+input[type='radio']:active {
+  background-image: url(../icons/actions/radio-selected.svg);
+}
+input[type='radio']:checked:active {
+  background-image: url(../icons/actions/radio-active-selected.svg);
+}
+input[type='radio']:checked {
+  background-image: url(../icons/actions/radio-active.svg);
+}

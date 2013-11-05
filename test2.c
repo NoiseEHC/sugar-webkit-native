@@ -9,6 +9,9 @@
 #include <X11/Xatom.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include <gio/gio.h>
 #ifdef G_OS_UNIX
@@ -33,7 +36,19 @@ static void requestStartedCb(SoupSession *session,
                              SoupMessage *msg,
                              SoupSocket  *socket,
                              gpointer     user_data);
-*/                                                                                                              
+*/
+
+void serverRequestStartedCb(SoupServer        *server,
+                            SoupMessage       *message,
+                            SoupClientContext *client,
+                            gpointer           user_data);
+void serverHandleStatic(SoupServer *server,
+                        SoupMessage *msg,
+                        const char *path,
+                        GHashTable *query,
+                        SoupClientContext *client,
+                        gpointer user_data);
+                                                                                                                 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 static gchar* bundle_id = NULL;
@@ -155,14 +170,34 @@ int main(int argc, char* argv[])
 */
 #endif
 
+    SoupServer *server = soup_server_new(SOUP_SERVER_PORT, 0, NULL); // use some random port
+//ARGH: it crashes
+//    SoupAddress *address = soup_address_new("localhost", 0);
+//    if(address != NULL) {
+//        SoupServer *server = soup_server_new(SOUP_SERVER_INTERFACE, address, NULL); // use some random port
+//    }
+    guint port = soup_server_get_port(server);
+    SoupSocket *listener = soup_server_get_listener(server);
+    SoupAddress *addr = soup_socket_get_local_address(listener);
+    fprintf(stderr, "server host %s port %d\n", soup_address_get_name(addr), port);
+    soup_server_add_handler(server, "/activity", serverHandleStatic, NULL, NULL);
+    soup_server_add_handler(server, "/web", serverHandleStatic, NULL, NULL);
+//    g_signal_connect(server, "request-started", G_CALLBACK(serverRequestStartedCb), NULL);
+    soup_server_run_async(server);
+    
+/*
     gchar *current_dir = g_get_current_dir();
     gchar index_uri[256];
     //ARGH: a file uri always has to be absolute
     sprintf(index_uri, "file://%s/index.html", current_dir);
     webkit_web_view_load_uri(webView, index_uri);
-
+*/
     //webkit_web_view_load_uri(webView, "http://nell-colors.github.cscott.net");
     //webkit_web_view_load_uri(webView, "http://index.hu");
+
+    gchar buffer[256];
+    sprintf(buffer, "http://localhost:%d/web/index.html", port);
+    webkit_web_view_load_uri(webView, buffer);
 
     gtk_widget_grab_focus(GTK_WIDGET(webView));
     gtk_widget_show_all(main_window);
@@ -291,5 +326,68 @@ static void requestStartedCb(SoupSession *session,
     }
 }                             
 */
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+void serverRequestStartedCb(SoupServer        *server,
+                            SoupMessage       *message,
+                            SoupClientContext *client,
+                            gpointer           user_data)
+{
+    fprintf(stderr, "serverRequestStartedCb: \n");
+}
+
+const gchar *extension_mapping[] = {
+    ".html", "text/html",
+    ".css", "text/css",
+    ".js", "text/javascript",
+    ".json", "application/json",
+    ".svg", "image/svg+xml",
+    NULL
+};
+
+static const gchar *getContentType(const gchar *uri) {
+    int i;
+    for(i=0; extension_mapping[i] != NULL; i += 2) {
+        if(g_str_has_suffix(uri, extension_mapping[i]))
+            return extension_mapping[i+1];
+    }
+    return "text";
+}
+
+void serverHandleStatic(SoupServer *server,
+                        SoupMessage *msg,
+                        const char *path,
+                        GHashTable *query,
+                        SoupClientContext *client,
+                        gpointer user_data)
+{
+    gchar *current_dir = g_get_current_dir();
+    gchar full_file_path[256];
+    sprintf(full_file_path, "%s%s", current_dir, path);
+    bool ok = false;
+    //TODO: reject .. in path
+    int fd = open(full_file_path, O_RDONLY);
+    if(fd != -1) {
+        struct stat sstat;
+        if(fstat(fd, &sstat) != -1) {
+            size_t len = (size_t)sstat.st_size;
+            void *addr = mmap(NULL, len, PROT_READ, MAP_PRIVATE, fd, 0);
+            if(addr != MAP_FAILED) {
+                const gchar *content_type = getContentType(path);
+                soup_message_set_response(msg, content_type, SOUP_MEMORY_COPY, addr, len);
+                soup_message_set_status(msg, 200);
+                fprintf(stderr, "GET: %s, size is %ld, type is '%s'\n", full_file_path, len, content_type);
+                ok = true;
+            }
+        }
+        close(fd);
+    }
+    if(!ok) {
+        soup_message_set_status(msg, 404);
+        fprintf(stderr, "ERROR: %s\n", full_file_path);
+    }
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
