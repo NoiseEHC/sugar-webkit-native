@@ -22,7 +22,18 @@
 static void destroyWindowCb(GtkWidget* widget, GtkWidget* window);
 static gboolean closeWebViewCb(WebKitWebView* webView, GtkWidget* window);
 static void afterMainWindowRealized(GtkWidget* window, gpointer user_data);
-
+/*
+static void resourceRequestStarting(WebKitWebView         *web_view,
+                                    WebKitWebFrame        *web_frame,
+                                    WebKitWebResource     *web_resource,
+                                    WebKitNetworkRequest  *request,
+                                    WebKitNetworkResponse *response,
+                                    gpointer               user_data);
+static void requestStartedCb(SoupSession *session,
+                             SoupMessage *msg,
+                             SoupSocket  *socket,
+                             gpointer     user_data);
+*/                                                                                                              
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 static gchar* bundle_id = NULL;
@@ -136,6 +147,12 @@ int main(int argc, char* argv[])
     g_signal_connect(webView, "close", G_CALLBACK(closeWebViewCb), main_window);
 #else
     g_signal_connect(webView, "close-web-view", G_CALLBACK(closeWebViewCb), main_window);
+/*
+    //g_signal_connect(webView, "resource-request-starting", G_CALLBACK(resourceRequestStarting), main_window);
+    SoupSession *session = webkit_get_default_session();
+    fprintf(stderr, "session is %s\n", session == NULL ? "null" : "notnull");
+    g_signal_connect(session, "request-started", G_CALLBACK(requestStartedCb), main_window);
+*/
 #endif
 
     gchar *current_dir = g_get_current_dir();
@@ -238,5 +255,41 @@ static void on_name_lost (GDBusConnection *connection, const gchar *name, gpoint
     exit (1);
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/*
+static void resourceRequestStarting(WebKitWebView         *web_view,
+                                    WebKitWebFrame        *web_frame,
+                                    WebKitWebResource     *web_resource,
+                                    WebKitNetworkRequest  *request,
+                                    WebKitNetworkResponse *response,
+                                    gpointer               user_data)
+{
+    fprintf(stderr, "resourceRequestStarting request: %s\n", webkit_network_request_get_uri(request));
+    //fprintf(stderr, "resourceRequestStarting response: %s\n", response == NULL ? "NULL" : webkit_network_response_get_uri(response));
+    //SoupMessage *message = webkit_network_request_get_message(request);
+    //soup_message_set_response(message, "text/html", SOUP_MEMORY_STATIC, "alma", 4);
+
+    SoupSession *session = webkit_get_default_session();
+    fprintf(stderr, "session is %s\n", session == NULL ? "null2" : "notnull2");
+    g_signal_connect(session, "request-started", G_CALLBACK(requestStartedCb), NULL);
+}
+
+static int callcount = 0;
+
+static void requestStartedCb(SoupSession *session,
+                             SoupMessage *msg,
+                             SoupSocket  *socket,
+                             gpointer     user_data)
+{
+    fprintf(stderr, "requestStartedCb: %s\n", 
+        soup_uri_to_string(soup_message_get_uri(msg), false));
+    if(callcount < 5) {
+        ++callcount;
+        soup_message_set_response(msg, "text/html", SOUP_MEMORY_STATIC, "alma", 4);
+    } else {
+        exit(2);
+    }
+}                             
+*/
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
