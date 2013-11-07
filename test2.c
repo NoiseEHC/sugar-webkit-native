@@ -129,7 +129,7 @@ int main(int argc, char* argv[])
     gchar service_name[256];
     sprintf(service_name, "org.laptop.Activity%s", activity_id);
     
-    guint owner_id = g_bus_own_name(
+    /*guint owner_id =*/ g_bus_own_name(
         G_BUS_TYPE_SESSION, service_name, G_BUS_NAME_OWNER_FLAGS_NONE,
         on_bus_acquired, on_name_acquired, on_name_lost,
         NULL, NULL);
