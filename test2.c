@@ -48,6 +48,12 @@ void serverHandleStatic(SoupServer *server,
                         GHashTable *query,
                         SoupClientContext *client,
                         gpointer user_data);
+void serverHandleJournal(SoupServer *server,
+                         SoupMessage *msg,
+                         const char *path,
+                         GHashTable *query,
+                         SoupClientContext *client,
+                         gpointer user_data);
                                                                                                                  
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -135,7 +141,7 @@ int main(int argc, char* argv[])
         NULL, NULL);
 
 /////////////////////////////////////////////////
-
+/*
     GDBusProxy *journal = g_dbus_proxy_new_for_bus_sync(
         G_BUS_TYPE_SESSION, G_DBUS_PROXY_FLAGS_NONE, NULL,
         "org.laptop.sugar.DataStore",
@@ -181,7 +187,7 @@ int main(int argc, char* argv[])
             }
         }
     }
-                                         
+*/                                         
 /////////////////////////////////////////////////
         
     WebKitWebView *webView = WEBKIT_WEB_VIEW(webkit_web_view_new());
@@ -230,6 +236,7 @@ int main(int argc, char* argv[])
     fprintf(stderr, "server host %s port %d\n", soup_address_get_name(addr), port);
     soup_server_add_handler(server, "/activity", serverHandleStatic, NULL, NULL);
     soup_server_add_handler(server, "/web", serverHandleStatic, NULL, NULL);
+    soup_server_add_handler(server, "/journal", serverHandleJournal, NULL, NULL);
 //    g_signal_connect(server, "request-started", G_CALLBACK(serverRequestStartedCb), NULL);
     soup_server_run_async(server);
     
@@ -434,6 +441,95 @@ void serverHandleStatic(SoupServer *server,
     if(!ok) {
         soup_message_set_status(msg, 404);
         fprintf(stderr, "ERROR: %s\n", full_file_path);
+    }
+}
+
+static void append(SoupMessage *msg, const gchar *text)
+{
+    soup_message_body_append(msg->response_body, SOUP_MEMORY_COPY, text, strlen(text));
+}
+
+static const gchar *lookup(GVariant *dictionary, const gchar *lookup_key, const gchar *default_value)
+{
+    GVariantIter dictionary_iter;
+    g_variant_iter_init(&dictionary_iter, dictionary);
+    const char *key = NULL;
+    GVariant *value = NULL;
+    while (g_variant_iter_loop(&dictionary_iter, "{s@v}", &key, &value)) {
+        if(strcmp(key, lookup_key) != 0)
+            continue;
+        GVariant *unboxed = g_variant_get_variant(value);
+        if(strcmp(g_variant_get_type_string(unboxed), "s") == 0) {
+            return g_variant_get_string(unboxed, NULL);
+        } else if(strcmp(g_variant_get_type_string(unboxed), "ay") != 0) {
+            return g_variant_print(unboxed, FALSE);
+        } else if(g_variant_n_children(unboxed) < 256) { // skip preview
+            gchar *buffer = (gchar *)malloc(256+1);
+            int i=0;
+            guchar c;
+            GVariantIter char_iter;
+            g_variant_iter_init(&char_iter, unboxed);
+            while (g_variant_iter_loop(&char_iter, "y", &c)) {
+                buffer[i] = c;
+                ++i;
+            }
+            buffer[i] = 0;
+            return buffer;
+        }
+    }
+    return default_value;
+}
+
+void serverHandleJournal(SoupServer *server,
+                         SoupMessage *msg,
+                         const char *path,
+                         GHashTable *query,
+                         SoupClientContext *client,
+                         gpointer user_data)
+{
+    bool ok = false;
+    if(strcmp(path, "/journal/journal.html") == 0) {
+
+        GDBusProxy *journal = g_dbus_proxy_new_for_bus_sync(
+            G_BUS_TYPE_SESSION, G_DBUS_PROXY_FLAGS_NONE, NULL,
+            "org.laptop.sugar.DataStore",
+            "/org/laptop/sugar/DataStore",
+            "org.laptop.sugar.DataStore",
+            NULL, NULL);
+        GVariant *params = g_variant_new("(a{sv}as)", NULL, NULL);
+        GError *error = NULL;
+        GVariant *result = g_dbus_proxy_call_sync(
+            journal, "find", params, G_DBUS_CALL_FLAGS_NONE, -1, NULL, &error);
+        if(error != NULL) {fprintf(stderr, "error: %d, %d, %s\n", error->domain, error->code, error->message);}
+        if(result != NULL) {
+
+            soup_message_headers_replace(msg->response_headers, "Content-Type", "text/html");
+            append(msg, "<html><body>");
+
+            GVariant *results = NULL;
+            guint32 count = -1;
+            g_variant_get(result, "(@aa{sv}u)", &results, &count);
+            GVariant *dictionary = NULL;
+            GVariantIter results_iter;
+            g_variant_iter_init(&results_iter, results);
+            while (g_variant_iter_loop(&results_iter, "@a{sv}", &dictionary)) {
+                append(msg, "<p><a href='");
+                append(msg, lookup(dictionary, "uid", "invalid object id"));
+                append(msg, "'>");
+                append(msg, lookup(dictionary, "title", "invalid title"));
+                append(msg, "</a></p>");
+            }
+
+            append(msg, "</body></html>");
+            soup_message_set_status(msg, 200);
+            fprintf(stderr, "GET: %s\n", path);
+            ok = true;
+        }
+    
+    }
+    if(!ok) {
+        soup_message_set_status(msg, 404);
+        fprintf(stderr, "ERROR: %s\n", path);
     }
 }
 
