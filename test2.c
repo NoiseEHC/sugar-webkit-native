@@ -135,6 +135,54 @@ int main(int argc, char* argv[])
         NULL, NULL);
 
 /////////////////////////////////////////////////
+
+    GDBusProxy *journal = g_dbus_proxy_new_for_bus_sync(
+        G_BUS_TYPE_SESSION, G_DBUS_PROXY_FLAGS_NONE, NULL,
+        "org.laptop.sugar.DataStore",
+        "/org/laptop/sugar/DataStore",
+        "org.laptop.sugar.DataStore",
+        NULL, NULL);
+    GVariant *params = g_variant_new("(a{sv}as)", NULL, NULL);
+    //fprintf(stderr, "journal proxy params is %s\n", params == NULL ? "null" : "notnull");
+    GVariant *result = g_dbus_proxy_call_sync(
+        journal, "find", params, G_DBUS_CALL_FLAGS_NONE, -1, NULL, &error);
+    //fprintf(stderr, "journal proxy result is %s\n", result == NULL ? "null" : "notnull");
+    if(error != NULL) {fprintf(stderr, "error: %d, %d, %s\n", error->domain, error->code, error->message);}
+    if(result != NULL) {
+        //fprintf(stderr, "result type: %s\n", g_variant_get_type_string(result));
+        GVariant *results = NULL;
+        guint32 count = -1;
+        g_variant_get(result, "(@aa{sv}u)", &results, &count);
+        fprintf(stderr, "results is %s, count is %d\n", results == NULL ? "null" : "notnull", count);
+        //fprintf(stderr, "results type: %s\n", g_variant_get_type_string(results));
+        GVariant *dictionary = NULL;
+        GVariantIter results_iter;
+        g_variant_iter_init(&results_iter, results);
+        while (g_variant_iter_loop(&results_iter, "@a{sv}", &dictionary)) {
+            GVariantIter dictionary_iter;
+            g_variant_iter_init(&dictionary_iter, dictionary);
+            const char *key = NULL;
+            GVariant *value = NULL;
+            while (g_variant_iter_loop(&dictionary_iter, "{s@v}", &key, &value)) {
+                GVariant *unboxed = g_variant_get_variant(value);
+                if(strcmp(g_variant_get_type_string(unboxed), "ay") != 0) {
+                    fprintf(stderr, "%s=%s\n", key, g_variant_print(unboxed, TRUE));
+                } else if(g_variant_n_children(unboxed) < 256) { // skip preview
+                    //ARGH: for some 'clever' reason most of the strings are byte arrays...
+                    fprintf(stderr, "%s=", key);
+                    guchar c;
+                    GVariantIter char_iter;
+                    g_variant_iter_init(&char_iter, unboxed);
+                    while (g_variant_iter_loop(&char_iter, "y", &c)) {
+                        fprintf(stderr, "%c", c);
+                    }
+                    fprintf(stderr, "\n");
+                }
+            }
+        }
+    }
+                                         
+/////////////////////////////////////////////////
         
     WebKitWebView *webView = WEBKIT_WEB_VIEW(webkit_web_view_new());
 /*
